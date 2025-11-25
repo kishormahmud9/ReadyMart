@@ -2,10 +2,10 @@ import Link from "next/link";
 import Image from "next/image";
 
 const categories = [
-    { id: 1, name: "Men", image: "https://images.unsplash.com/photo-1490578474895-699cd4e2cf59?w=500&auto=format&fit=crop&q=60", link: "/shop?category=men", color: "from-blue-500 to-blue-700" },
-    { id: 2, name: "Women", image: "https://images.unsplash.com/photo-1503342217505-b0815a046baf?w=500&auto=format&fit=crop&q=60", link: "/shop?category=women", color: "from-pink-500 to-rose-600" },
-    { id: 3, name: "Kids", image: "https://images.unsplash.com/photo-1519238263496-63439708bc80?w=500&auto=format&fit=crop&q=60", link: "/shop?category=kids", color: "from-yellow-400 to-orange-500" },
-    { id: 4, name: "Accessories", image: "https://images.unsplash.com/photo-1523293188086-b51292955f2c?w=500&auto=format&fit=crop&q=60", link: "/shop?category=accessories", color: "from-purple-500 to-indigo-600" },
+    { id: 1, name: "Men", image: "https://images.unsplash.com/photo-1617127365659-c47fa864d8bc?w=500&auto=format&fit=crop&q=80", link: "/shop?category=men", color: "from-blue-500 to-blue-700" },
+    { id: 2, name: "Women", image: "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=500&auto=format&fit=crop&q=80", link: "/shop?category=women", color: "from-pink-500 to-rose-600" },
+    { id: 3, name: "Kids", image: "https://images.unsplash.com/photo-1514090458221-65bb69cf63e6?w=500&auto=format&fit=crop&q=80", link: "/shop?category=kids", color: "from-yellow-400 to-orange-500" },
+    { id: 4, name: "Accessories", image: "https://images.unsplash.com/photo-1606760227091-3dd870d97f1d?w=500&auto=format&fit=crop&q=80", link: "/shop?category=accessories", color: "from-purple-500 to-indigo-600" },
 ];
 
 export default function CategorySection() {

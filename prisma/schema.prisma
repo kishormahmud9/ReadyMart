@@ -32,6 +32,24 @@ enum PaymentStatus {
   REFUNDED
 }
 
+enum VerificationType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
+// Verification Tokens for OTP
+model VerificationToken {
+  id        String           @id @default(cuid())
+  email     String
+  token     String           @unique
+  type      VerificationType
+  expiresAt DateTime
+  createdAt DateTime         @default(now())
+
+  @@index([email])
+  @@index([token])
+}
+
 // User & Auth
 model User {
   id            String    @id @default(cuid())

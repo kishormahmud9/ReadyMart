@@ -6,21 +6,21 @@ const products = [
         name: "Classic Denim Jacket",
         price: 49.99,
         salePrice: 79.99,
-        image: "https://images.unsplash.com/photo-1523205771623-e0faa4d2813d?w=500&auto=format&fit=crop&q=60",
+        image: "https://images.unsplash.com/photo-1551028719-00167b16eac5?w=500&auto=format&fit=crop&q=80",
         category: "Men",
     },
     {
         id: 2,
         name: "Floral Summer Dress",
         price: 39.99,
-        image: "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=500&auto=format&fit=crop&q=60",
+        image: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=500&auto=format&fit=crop&q=80",
         category: "Women",
     },
     {
         id: 3,
         name: "Kids Cotton T-Shirt",
         price: 14.99,
-        image: "https://images.unsplash.com/photo-1519238263496-63439708bc80?w=500&auto=format&fit=crop&q=60",
+        image: "https://images.unsplash.com/photo-1503944583220-79d8926ad5e2?w=500&auto=format&fit=crop&q=80",
         category: "Kids",
     },
     {
@@ -28,7 +28,7 @@ const products = [
         name: "Leather Crossbody Bag",
         price: 89.99,
         salePrice: 120.0,
-        image: "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=500&auto=format&fit=crop&q=60",
+        image: "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=500&auto=format&fit=crop&q=80",
         category: "Accessories",
     },
 ];
