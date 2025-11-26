@@ -3,45 +3,93 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { User, Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
+import { toast } from "react-hot-toast";
 import Input from "../ui/Input";
 import Button from "../ui/Button";
 import { useAuth } from "@/lib/contexts/AuthContext";
 
-export default function RegisterForm() {
+export default function LoginForm() {
     const router = useRouter();
-    const { register } = useAuth();
+    const { login } = useAuth();
 
     const [formData, setFormData] = useState({
-        name: "",
         email: "",
         password: "",
+        rememberMe: false,
     });
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState("");
+    const [errors, setErrors] = useState({
+        email: "",
+        password: "",
+    });
+
+    const validateForm = () => {
+        const newErrors = {
+            email: "",
+            password: "",
+        };
+
+        if (!formData.email.trim()) {
+            newErrors.email = "Email is required";
+        }
+
+        if (!formData.password) {
+            newErrors.password = "Password is required";
+        }
+
+        setErrors(newErrors);
+        return !newErrors.email && !newErrors.password;
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError("");
+
+        // Clear previous errors
+        setErrors({ email: "", password: "" });
+
+        // Validate form
+        if (!validateForm()) {
+            return;
+        }
+
         setLoading(true);
 
         try {
-            const result = await register(formData.name, formData.email, formData.password);
-            // Redirect to OTP verification with email
-            router.push(`/verify-otp?email=${encodeURIComponent(result.email)}&type=EMAIL_VERIFICATION`);
+            await login(formData.email, formData.password, formData.rememberMe);
+            // Redirect to dashboard on success
+            router.push("/profile");
+            toast.success("Welcome back!");
         } catch (err: any) {
-            setError(err.message || "Registration failed. Please try again.");
+            // Check if backend sent field-specific error
+            const errorMessage = err.message || "Login failed. Please try again.";
+            const errorField = err.field;
+
+            if (errorField === "email") {
+                setErrors({ email: errorMessage, password: "" });
+            } else if (errorField === "password") {
+                setErrors({ email: "", password: errorMessage });
+            } else {
+                // General error - show toast
+                toast.error(errorMessage);
+            }
         } finally {
             setLoading(false);
         }
     };
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target;
+        const { name, value, type, checked } = e.target;
+
+        // Clear error for this field when user starts typing
+        if (name === "email" || name === "password") {
+            setErrors(prev => ({ ...prev, [name]: "" }));
+        }
+
         setFormData(prev => ({
             ...prev,
-            [name]: value,
+            [name]: type === "checkbox" ? checked : value,
         }));
     };
 
@@ -63,21 +111,34 @@ export default function RegisterForm() {
                         <Link href="/" className="text-3xl font-extrabold tracking-tight mb-8 block">
                             Ready<span className="text-blue-900">Mart</span>
                         </Link>
-                        <h2 className="text-4xl font-bold mb-4 leading-tight">Join the <br /> Revolution</h2>
-                        <p className="text-orange-100 text-lg mb-8">Experience premium fashion like never before. Create your account today.</p>
+                        <h2 className="text-4xl font-bold mb-4 leading-tight">Welcome <br /> Back!</h2>
+                        <p className="text-orange-100 text-lg mb-8">Sign in to continue your premium shopping experience.</p>
                     </div>
                     <div className="relative z-10">
-                        <div className="flex -space-x-4 mb-4">
-                            {[1, 2, 3, 4].map((i) => (
-                                <div key={i} className="w-10 h-10 rounded-full border-2 border-white bg-gray-300 flex items-center justify-center text-xs font-bold text-gray-600 overflow-hidden">
-                                    <img src={`https://i.pravatar.cc/100?img=${i + 10}`} alt="User" className="w-full h-full object-cover" />
+                        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+                            <div className="flex items-center mb-3">
+                                <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center mr-4">
+                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                    </svg>
                                 </div>
-                            ))}
-                            <div className="w-10 h-10 rounded-full border-2 border-white bg-white flex items-center justify-center text-xs font-bold text-orange-600">
-                                +2k
+                                <div>
+                                    <p className="font-semibold text-white">Secure Shopping</p>
+                                    <p className="text-sm text-orange-100">Your data is protected</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center">
+                                <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center mr-4">
+                                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p className="font-semibold text-white">Fast Delivery</p>
+                                    <p className="text-sm text-orange-100">Get your orders quickly</p>
+                                </div>
                             </div>
                         </div>
-                        <p className="text-sm text-orange-100 font-medium">Join 2,000+ happy shoppers</p>
                     </div>
 
                     {/* Abstract Circles */}
@@ -87,27 +148,10 @@ export default function RegisterForm() {
 
                 {/* Right Side - Form Section */}
                 <div className="md:w-1/2 p-8 md:p-12 bg-white">
-                    <h3 className="text-3xl font-bold text-gray-900 mb-2">Create Account</h3>
-                    <p className="text-gray-500 mb-8">Enter your details to get started.</p>
-
-                    {error && (
-                        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
-                            {error}
-                        </div>
-                    )}
+                    <h3 className="text-3xl font-bold text-gray-900 mb-2">Sign In</h3>
+                    <p className="text-gray-500 mb-8">Enter your credentials to access your account.</p>
 
                     <form onSubmit={handleSubmit} className="space-y-5">
-                        <Input
-                            icon={User}
-                            placeholder="Full Name"
-                            type="text"
-                            name="name"
-                            value={formData.name}
-                            onChange={handleChange}
-                            required
-                            disabled={loading}
-                        />
-
                         <Input
                             icon={Mail}
                             placeholder="Email Address"
@@ -115,8 +159,8 @@ export default function RegisterForm() {
                             name="email"
                             value={formData.email}
                             onChange={handleChange}
-                            required
                             disabled={loading}
+                            error={errors.email}
                         />
 
                         <Input
@@ -126,8 +170,8 @@ export default function RegisterForm() {
                             name="password"
                             value={formData.password}
                             onChange={handleChange}
-                            required
                             disabled={loading}
+                            error={errors.password}
                             rightElement={
                                 <button
                                     type="button"
@@ -140,13 +184,30 @@ export default function RegisterForm() {
                             }
                         />
 
+                        <div className="flex items-center justify-between">
+                            <label className="flex items-center cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    name="rememberMe"
+                                    checked={formData.rememberMe}
+                                    onChange={handleChange}
+                                    disabled={loading}
+                                    className="w-4 h-4 text-orange-600 bg-gray-100 border-gray-300 rounded focus:ring-orange-500 focus:ring-2"
+                                />
+                                <span className="ml-2 text-sm text-gray-600">Remember me</span>
+                            </label>
+                            <Link href="/forgot-password" className="text-sm text-orange-600 hover:text-orange-700 font-medium hover:underline">
+                                Forgot password?
+                            </Link>
+                        </div>
+
                         <Button
                             type="submit"
                             fullWidth
                             icon={loading ? <Loader2 className="animate-spin" size={20} /> : <ArrowRight size={20} />}
                             disabled={loading}
                         >
-                            {loading ? "Creating account..." : "Sign Up"}
+                            {loading ? "Signing in..." : "Sign In"}
                         </Button>
                     </form>
 
@@ -187,9 +248,9 @@ export default function RegisterForm() {
                     </div>
 
                     <p className="text-center mt-8 text-gray-500 text-sm">
-                        Already have an account?{" "}
-                        <Link href="/login" className="text-orange-600 font-bold hover:underline">
-                            Log in
+                        Don't have an account?{" "}
+                        <Link href="/register" className="text-orange-600 font-bold hover:underline">
+                            Sign up
                         </Link>
                     </p>
                 </div>
@@ -197,4 +258,3 @@ export default function RegisterForm() {
         </div>
     );
 }
-

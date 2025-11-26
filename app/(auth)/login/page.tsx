@@ -1,10 +1,5 @@
+import LoginForm from "@/components/auth/LoginForm";
+
 export default function LoginPage() {
-    return (
-        <div className="flex min-h-screen items-center justify-center">
-            <div className="p-8 border rounded-lg shadow-md">
-                <h1 className="text-2xl font-bold mb-4">Login</h1>
-                <p>Login form will go here.</p>
-            </div>
-        </div>
-    );
+    return <LoginForm />;
 }

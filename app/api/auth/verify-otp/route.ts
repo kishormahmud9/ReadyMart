@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyOTP } from '@/lib/auth/otp'
-import { generateAccessToken } from '@/lib/auth/jwt'
+import { generateTokenPair } from '@/lib/auth/jwt'
+import { setAuthCookies } from '@/lib/auth/cookies'
 
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json()
-        const { email, otp, type } = body
+        const { email, otp, type, rememberMe = false } = body
 
         // Validate input
         if (!email || !otp || !type) {
@@ -54,13 +55,18 @@ export async function POST(request: NextRequest) {
             })
         }
 
-        // Generate JWT token
-        const token = generateAccessToken(user.id, user.email, user.role)
+        // Generate access and refresh tokens
+        const { accessToken, refreshToken } = generateTokenPair(
+            user.id,
+            user.email,
+            user.role,
+            rememberMe
+        )
 
-        return NextResponse.json({
+        // Create response
+        const response = NextResponse.json({
             success: true,
             message: 'Verification successful',
-            token,
             user: {
                 id: user.id,
                 name: user.name,
@@ -70,6 +76,11 @@ export async function POST(request: NextRequest) {
             },
         })
 
+        // Set tokens in HTTP-only cookies
+        setAuthCookies(response, accessToken, refreshToken, rememberMe)
+
+        return response
+
     } catch (error) {
         console.error('OTP verification error:', error)
         return NextResponse.json(
@@ -78,3 +89,4 @@ export async function POST(request: NextRequest) {
         )
     }
 }
+

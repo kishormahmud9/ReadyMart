@@ -1,29 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { comparePassword } from '@/lib/auth/password'
-import { generateAccessToken } from '@/lib/auth/jwt'
+import { generateTokenPair } from '@/lib/auth/jwt'
+import { setAuthCookies } from '@/lib/auth/cookies'
 
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json()
-        const { email, password } = body
+        const { email, password, rememberMe = false } = body
 
-        // Validate input
-        if (!email || !password) {
+        // Validate email
+        if (!email || !email.trim()) {
             return NextResponse.json(
-                { success: false, error: 'Email and password are required' },
+                { success: false, error: 'Email is required', field: 'email' },
+                { status: 400 }
+            )
+        }
+
+        // Validate password
+        if (!password) {
+            return NextResponse.json(
+                { success: false, error: 'Password is required', field: 'password' },
                 { status: 400 }
             )
         }
 
         // Find user
         const user = await prisma.user.findUnique({
-            where: { email },
+            where: { email: email.trim().toLowerCase() },
         })
 
         if (!user || !user.password) {
             return NextResponse.json(
-                { success: false, error: 'Invalid email or password' },
+                { success: false, error: 'No account found with this email', field: 'email' },
                 { status: 401 }
             )
         }
@@ -33,7 +42,7 @@ export async function POST(request: NextRequest) {
 
         if (!isPasswordValid) {
             return NextResponse.json(
-                { success: false, error: 'Invalid email or password' },
+                { success: false, error: 'Incorrect password', field: 'password' },
                 { status: 401 }
             )
         }
@@ -44,19 +53,25 @@ export async function POST(request: NextRequest) {
                 {
                     success: false,
                     error: 'Please verify your email before logging in',
+                    field: 'email',
                     requiresVerification: true,
                 },
                 { status: 403 }
             )
         }
 
-        // Generate JWT token
-        const token = generateAccessToken(user.id, user.email, user.role)
+        // Generate access and refresh tokens
+        const { accessToken, refreshToken } = generateTokenPair(
+            user.id,
+            user.email,
+            user.role,
+            rememberMe
+        )
 
-        return NextResponse.json({
+        // Create response
+        const response = NextResponse.json({
             success: true,
             message: 'Login successful',
-            token,
             user: {
                 id: user.id,
                 name: user.name,
@@ -66,11 +81,18 @@ export async function POST(request: NextRequest) {
             },
         })
 
+        // Set tokens in HTTP-only cookies
+        setAuthCookies(response, accessToken, refreshToken, rememberMe)
+
+        return response
+
     } catch (error) {
         console.error('Login error:', error)
         return NextResponse.json(
-            { success: false, error: 'Login failed. Please try again.' },
+            { success: false, error: 'Login failed. Please try again.', field: 'general' },
             { status: 500 }
         )
     }
 }
+
+

@@ -1,21 +1,38 @@
 import jwt from 'jsonwebtoken'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production'
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d'
+const JWT_ACCESS_TOKEN_EXPIRES_IN = process.env.JWT_ACCESS_TOKEN_EXPIRES_IN || '15m'
+const JWT_REFRESH_TOKEN_EXPIRES_IN = process.env.JWT_REFRESH_TOKEN_EXPIRES_IN || '7d'
+const JWT_REFRESH_TOKEN_REMEMBER_ME_EXPIRES_IN = process.env.JWT_REFRESH_TOKEN_REMEMBER_ME_EXPIRES_IN || '30d'
 
 export interface JWTPayload {
     userId: string
     email: string
     role: string
+    type?: 'access' | 'refresh'
 }
 
 /**
- * Generate JWT access token
+ * Generate JWT access token (short-lived)
  */
-export function generateToken(payload: JWTPayload): string {
-    return jwt.sign(payload, JWT_SECRET, {
-        expiresIn: JWT_EXPIRES_IN,
-    })
+export function generateAccessToken(userId: string, email: string, role: string): string {
+    return jwt.sign(
+        { userId, email, role, type: 'access' },
+        JWT_SECRET,
+        { expiresIn: JWT_ACCESS_TOKEN_EXPIRES_IN }
+    )
+}
+
+/**
+ * Generate JWT refresh token (long-lived)
+ */
+export function generateRefreshToken(userId: string, email: string, role: string, rememberMe: boolean = false): string {
+    const expiresIn = rememberMe ? JWT_REFRESH_TOKEN_REMEMBER_ME_EXPIRES_IN : JWT_REFRESH_TOKEN_EXPIRES_IN
+    return jwt.sign(
+        { userId, email, role, type: 'refresh' },
+        JWT_SECRET,
+        { expiresIn }
+    )
 }
 
 /**
@@ -32,10 +49,40 @@ export function verifyToken(token: string): JWTPayload | null {
 }
 
 /**
- * Generate access token for user
+ * Verify access token specifically
  */
-export function generateAccessToken(userId: string, email: string, role: string): string {
-    return generateToken({ userId, email, role })
+export function verifyAccessToken(token: string): JWTPayload | null {
+    const payload = verifyToken(token)
+    if (payload && payload.type === 'access') {
+        return payload
+    }
+    return null
+}
+
+/**
+ * Verify refresh token specifically
+ */
+export function verifyRefreshToken(token: string): JWTPayload | null {
+    const payload = verifyToken(token)
+    if (payload && payload.type === 'refresh') {
+        return payload
+    }
+    return null
+}
+
+/**
+ * Generate both access and refresh tokens
+ */
+export function generateTokenPair(
+    userId: string,
+    email: string,
+    role: string,
+    rememberMe: boolean = false
+): { accessToken: string; refreshToken: string } {
+    return {
+        accessToken: generateAccessToken(userId, email, role),
+        refreshToken: generateRefreshToken(userId, email, role, rememberMe),
+    }
 }
 
 /**

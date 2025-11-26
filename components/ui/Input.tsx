@@ -13,12 +13,15 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
             <div className="relative">
                 {Icon && (
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <Icon className="h-5 w-5 text-gray-400" />
+                        <Icon className={`h-5 w-5 ${error ? 'text-red-400' : 'text-gray-400'}`} />
                     </div>
                 )}
                 <input
                     ref={ref}
-                    className={`w-full py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all ${Icon ? "pl-11" : "pl-4"
+                    className={`w-full py-3 bg-gray-50 border ${error
+                            ? 'border-red-500 focus:ring-red-500 focus:border-red-500'
+                            : 'border-gray-200 focus:ring-orange-500 focus:border-transparent'
+                        } rounded-xl focus:outline-none focus:ring-2 transition-all text-gray-900 placeholder:text-gray-400 ${Icon ? "pl-11" : "pl-4"
                         } ${rightElement ? "pr-12" : "pr-4"} ${className}`}
                     {...props}
                 />
@@ -27,7 +30,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
                         {rightElement}
                     </div>
                 )}
-                {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+                {error && <p className="text-red-600 text-sm mt-1.5 ml-1">{error}</p>}
             </div>
         );
     }
@@ -36,3 +39,4 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
 Input.displayName = "Input";
 
 export default Input;
+
