@@ -57,10 +57,10 @@ export async function authenticate(request: NextRequest): Promise<{
 /**
  * Middleware to require authentication
  */
-export function requireAuth(
-    handler: (request: NextRequest, user: { userId: string; email: string; role: string }) => Promise<NextResponse>
+export function requireAuth<T = any>(
+    handler: (request: NextRequest, user: { userId: string; email: string; role: string }, context?: T) => Promise<NextResponse>
 ) {
-    return async (request: NextRequest) => {
+    return async (request: NextRequest, context?: T) => {
         const auth = await authenticate(request)
 
         if (!auth.success || !auth.user) {
@@ -70,17 +70,17 @@ export function requireAuth(
             )
         }
 
-        return handler(request, auth.user)
+        return handler(request, auth.user, context)
     }
 }
 
 /**
  * Middleware to require admin role
  */
-export function requireAdmin(
-    handler: (request: NextRequest, user: { userId: string; email: string; role: string }) => Promise<NextResponse>
+export function requireAdmin<T = any>(
+    handler: (request: NextRequest, user: { userId: string; email: string; role: string }, context?: T) => Promise<NextResponse>
 ) {
-    return async (request: NextRequest) => {
+    return async (request: NextRequest, context?: T) => {
         const auth = await authenticate(request)
 
         if (!auth.success || !auth.user) {
@@ -97,6 +97,6 @@ export function requireAdmin(
             )
         }
 
-        return handler(request, auth.user)
+        return handler(request, auth.user, context)
     }
 }

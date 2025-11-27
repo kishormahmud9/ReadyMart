@@ -130,6 +130,11 @@ model Product {
 
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@index([slug])
+  @@index([categoryId])
+  @@index([brandId])
+  @@index([isFeatured])
 }
 
 model ProductAttribute {
@@ -167,6 +172,9 @@ model Order {
   
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+
+  @@index([orderNumber])
+  @@index([userId])
 }
 
 model OrderItem {

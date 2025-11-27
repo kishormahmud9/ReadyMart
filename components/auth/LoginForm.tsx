@@ -57,10 +57,16 @@ export default function LoginForm() {
         setLoading(true);
 
         try {
-            await login(formData.email, formData.password, formData.rememberMe);
-            // Redirect to dashboard on success
-            router.push("/profile");
+            const user = await login(formData.email, formData.password, formData.rememberMe);
+
             toast.success("Welcome back!");
+
+            // Redirect based on role
+            if (user?.role === "ADMIN") {
+                router.push("/admin/dashboard");
+            } else {
+                router.push("/profile");
+            }
         } catch (err: any) {
             // Check if backend sent field-specific error
             const errorMessage = err.message || "Login failed. Please try again.";

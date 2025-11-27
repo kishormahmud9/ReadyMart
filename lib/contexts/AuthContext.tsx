@@ -15,7 +15,7 @@ interface AuthContextType {
     user: User | null;
     isAuthenticated: boolean;
     isLoading: boolean;
-    login: (email: string, password: string, rememberMe: boolean) => Promise<void>;
+    login: (email: string, password: string, rememberMe: boolean) => Promise<User | undefined>;
     register: (name: string, email: string, password: string) => Promise<{ userId: string; email: string }>;
     logout: () => Promise<void>;
     refreshUser: () => Promise<void>;
@@ -65,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (result.user) {
             setUser(result.user);
+            return result.user;
         }
     };
 
