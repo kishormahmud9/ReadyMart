@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Search, ShoppingCart, User, Menu } from "lucide-react";
+import SearchBar from "./SearchBar";
 
 export default function Navbar() {
     return (
@@ -24,15 +25,8 @@ export default function Navbar() {
                     </Link>
 
                     {/* Search Bar (Hidden on mobile) */}
-                    <div className="hidden md:flex flex-1 mx-12 max-w-2xl relative group">
-                        <input
-                            type="text"
-                            placeholder="Search for premium products..."
-                            className="w-full border-2 border-gray-100 bg-gray-50 rounded-full py-3 px-6 focus:outline-none focus:border-orange-500 focus:bg-white focus:shadow-lg transition-all duration-300"
-                        />
-                        <button className="absolute right-2 top-1/2 -translate-y-1/2 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-full p-2 hover:shadow-lg hover:scale-105 transition duration-300">
-                            <Search size={20} />
-                        </button>
+                    <div className="hidden md:flex flex-1 mx-12 max-w-2xl relative group justify-center">
+                        <SearchBar />
                     </div>
 
                     {/* Icons */}

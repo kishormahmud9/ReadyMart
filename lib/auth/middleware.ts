@@ -22,8 +22,14 @@ export async function authenticate(request: NextRequest): Promise<{
     }
     error?: string
 }> {
+    // First try Authorization header
     const authHeader = request.headers.get('authorization')
-    const token = extractTokenFromHeader(authHeader)
+    let token = extractTokenFromHeader(authHeader)
+
+    // If no header, try cookies (for cookie-based auth)
+    if (!token) {
+        token = request.cookies.get('accessToken')?.value || null
+    }
 
     if (!token) {
         return { success: false, error: 'No token provided' }

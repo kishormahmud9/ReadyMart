@@ -2,32 +2,21 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth/middleware'
 
-// PUT /api/cart/items/[id] - Update cart item quantity
-export const PUT = requireAuth(async (
-    request: NextRequest,
-    user,
-    context?: { params: { id: string } }
-) => {
+// PATCH /api/cart/items/[id] - Update cart item quantity
+export const PATCH = requireAuth(async (request: NextRequest, user, context) => {
     try {
-        if (!context) {
-            return NextResponse.json(
-                { success: false, error: 'Invalid request' },
-                { status: 400 }
-            )
-        }
-
-        const { id } = await context.params
+        const { id } = context.params as { id: string }
         const body = await request.json()
         const { quantity } = body
 
-        if (typeof quantity !== 'number' || quantity < 1) {
+        if (!quantity || quantity < 1) {
             return NextResponse.json(
                 { success: false, error: 'Quantity must be at least 1' },
                 { status: 400 }
             )
         }
 
-        // Find cart item and verify ownership
+        // Find cart item
         const cartItem = await prisma.cartItem.findUnique({
             where: { id },
             include: {
@@ -43,6 +32,7 @@ export const PUT = requireAuth(async (
             )
         }
 
+        // Verify cart belongs to user
         if (cartItem.cart.userId !== user.userId) {
             return NextResponse.json(
                 { success: false, error: 'Unauthorized' },
@@ -50,10 +40,10 @@ export const PUT = requireAuth(async (
             )
         }
 
-        // Check stock availability
+        // Check stock
         if (cartItem.product.stock < quantity) {
             return NextResponse.json(
-                { success: false, error: 'Insufficient stock' },
+                { success: false, error: `Only ${cartItem.product.stock} items available in stock` },
                 { status: 400 }
             )
         }
@@ -64,9 +54,36 @@ export const PUT = requireAuth(async (
             data: { quantity },
         })
 
+        // Fetch updated cart
+        const updatedCart = await prisma.cart.findUnique({
+            where: { id: cartItem.cartId },
+            include: {
+                items: {
+                    include: {
+                        product: {
+                            include: {
+                                category: true,
+                                brand: true,
+                            },
+                        },
+                    },
+                },
+            },
+        })
+
+        const subtotal = updatedCart!.items.reduce((sum, item) => {
+            const price = item.product.salePrice || item.product.price
+            return sum + Number(price) * item.quantity
+        }, 0)
+
         return NextResponse.json({
             success: true,
-            message: 'Cart item updated',
+            data: {
+                ...updatedCart,
+                subtotal,
+                itemCount: updatedCart!.items.reduce((sum, item) => sum + item.quantity, 0),
+            },
+            message: 'Cart updated',
         })
     } catch (error) {
         console.error('Error updating cart item:', error)
@@ -78,22 +95,11 @@ export const PUT = requireAuth(async (
 })
 
 // DELETE /api/cart/items/[id] - Remove item from cart
-export const DELETE = requireAuth(async (
-    request: NextRequest,
-    user,
-    context?: { params: { id: string } }
-) => {
+export const DELETE = requireAuth(async (request: NextRequest, user, context) => {
     try {
-        if (!context) {
-            return NextResponse.json(
-                { success: false, error: 'Invalid request' },
-                { status: 400 }
-            )
-        }
+        const { id } = context.params as { id: string }
 
-        const { id } = await context.params
-
-        // Find cart item and verify ownership
+        // Find cart item
         const cartItem = await prisma.cartItem.findUnique({
             where: { id },
             include: {
@@ -108,6 +114,7 @@ export const DELETE = requireAuth(async (
             )
         }
 
+        // Verify cart belongs to user
         if (cartItem.cart.userId !== user.userId) {
             return NextResponse.json(
                 { success: false, error: 'Unauthorized' },
@@ -115,13 +122,40 @@ export const DELETE = requireAuth(async (
             )
         }
 
-        // Delete cart item
+        // Delete item
         await prisma.cartItem.delete({
             where: { id },
         })
 
+        // Fetch updated cart
+        const updatedCart = await prisma.cart.findUnique({
+            where: { id: cartItem.cartId },
+            include: {
+                items: {
+                    include: {
+                        product: {
+                            include: {
+                                category: true,
+                                brand: true,
+                            },
+                        },
+                    },
+                },
+            },
+        })
+
+        const subtotal = updatedCart!.items.reduce((sum, item) => {
+            const price = item.product.salePrice || item.product.price
+            return sum + Number(price) * item.quantity
+        }, 0)
+
         return NextResponse.json({
             success: true,
+            data: {
+                ...updatedCart,
+                subtotal,
+                itemCount: updatedCart!.items.reduce((sum, item) => sum + item.quantity, 0),
+            },
             message: 'Item removed from cart',
         })
     } catch (error) {

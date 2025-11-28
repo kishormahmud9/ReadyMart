@@ -103,7 +103,7 @@ export default function ProductsManagePage() {
         if (!confirm(`Are you sure you want to delete "${product.name}"?`)) return
 
         try {
-            const res = await fetch(`/api/products/${product.id}`, { method: "DELETE" })
+            const res = await fetch(`/api/admin/products/${product.id}`, { method: "DELETE" })
             const data = await res.json()
 
             if (data.success) {

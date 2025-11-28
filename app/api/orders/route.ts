@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth/middleware'
+import { sendEmail, getOrderConfirmationTemplate } from '@/lib/email'
 
 // GET /api/orders - Get user's orders
 export const GET = requireAuth(async (request: NextRequest, user) => {
@@ -63,12 +64,24 @@ export const GET = requireAuth(async (request: NextRequest, user) => {
 export const POST = requireAuth(async (request: NextRequest, user) => {
     try {
         const body = await request.json()
-        const { shippingAddress } = body
+        const { shippingAddressId } = body
 
         // Validate shipping address
-        if (!shippingAddress || !shippingAddress.street || !shippingAddress.city || !shippingAddress.zipCode || !shippingAddress.country) {
+        if (!shippingAddressId) {
             return NextResponse.json(
-                { success: false, error: 'Complete shipping address is required' },
+                { success: false, error: 'Shipping address is required' },
+                { status: 400 }
+            )
+        }
+
+        // Verify address exists and belongs to user
+        const address = await prisma.address.findUnique({
+            where: { id: shippingAddressId },
+        })
+
+        if (!address || address.userId !== user.userId) {
+            return NextResponse.json(
+                { success: false, error: 'Invalid shipping address' },
                 { status: 400 }
             )
         }
@@ -111,20 +124,6 @@ export const POST = requireAuth(async (request: NextRequest, user) => {
         // Generate order number
         const orderNumber = `ORD-${new Date().getFullYear()}${String(new Date().getMonth() + 1).padStart(2, '0')}${String(new Date().getDate()).padStart(2, '0')}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`
 
-        // Create address first
-        const address = await prisma.address.create({
-            data: {
-                userId: user.userId,
-                type: 'SHIPPING',
-                street: shippingAddress.street,
-                city: shippingAddress.city,
-                state: shippingAddress.state || '',
-                zipCode: shippingAddress.zipCode,
-                country: shippingAddress.country,
-                isDefault: false,
-            },
-        })
-
         // Create order in a transaction
         const order = await prisma.$transaction(async (tx) => {
             // Create order
@@ -150,6 +149,12 @@ export const POST = requireAuth(async (request: NextRequest, user) => {
                             product: true,
                         },
                     },
+                    user: {
+                        select: {
+                            name: true,
+                            email: true,
+                        }
+                    }
                 },
             })
 
@@ -172,6 +177,17 @@ export const POST = requireAuth(async (request: NextRequest, user) => {
 
             return newOrder
         })
+
+        // Send confirmation email
+        try {
+            await sendEmail({
+                to: user.email,
+                subject: `Order Confirmation - ${order.orderNumber}`,
+                html: getOrderConfirmationTemplate(order),
+            })
+        } catch (emailError) {
+            console.error('Failed to send email:', emailError)
+        }
 
         return NextResponse.json({
             success: true,

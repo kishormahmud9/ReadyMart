@@ -3,11 +3,11 @@ import { ShoppingCart, Heart, Eye } from "lucide-react";
 import Image from "next/image";
 
 interface ProductCardProps {
-    id: number;
+    id: string;
     name: string;
     price: number;
-    salePrice?: number;
-    image: string;
+    salePrice?: number | null;
+    image?: string | null;
     category: string;
 }
 
@@ -27,7 +27,7 @@ export default function ProductCard({ id, name, price, salePrice, image, categor
             {/* Image Container */}
             <div className="relative h-64 w-full overflow-hidden bg-gray-100">
                 <Image
-                    src={image}
+                    src={image || "/placeholder.png"}
                     alt={name}
                     fill
                     className="object-cover transition-transform duration-700 group-hover:scale-110"
